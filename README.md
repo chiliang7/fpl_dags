@@ -5,40 +5,27 @@ ETL pipelines that pull the Fantasy Premier League data regularly
 
 # Overview
 
-   A bit of the background on how this project started. My colleagues from London invite me to play the Fantasy Premier League of the 21/22 season. By the time it started, I didn't really know how to play. I applied the basic stats principle to pick my 15-player squad by picking the top talents in the most prestigious teams like Man City, Man United, Liverpool, Chelsea, and Arsenal. This stragtegy works for a while. Then, I realized there is more than that.
+   A bit of the background on how this project started. My colleagues from London invite me to play the Fantasy Premier League of the 21/22 season. By the time it started, I didn't really know how to play. I applied the basic stats principle to pick my 15-player squad by selecting the top talents in the most prestigious teams like Man City, Man United, Liverpool, Chelsea, and Arsenal. This stragtegy works for a while. Then, I realized there is more than that.
 
 
-   Over the past few months, I started to get more and more involved in this game and thought about more scientific and efficient ways to manage my team rather than just follow the social media and FPL show, though sometime they are very helpful. I realized you can actually pull the FPL data via their API, which is well documented in this [post](https://medium.com/@frenzelts/fantasy-premier-league-api-endpoints-a-detailed-guide-acbd5598eb19). I started to develop a python jupyter notebook to pull the raw data from the API and dumped them into Postgre database. 
+   Over the past few months, I started to get more and more involved in this game and thought about more scientific and efficient ways to manage my team besides just following the social media and FPL show. They are very helpful in general, but I just want to get my hands dirty on the data. I found that you can actually pull the FPL data via their API, which is well documented in this [post](https://medium.com/@frenzelts/fantasy-premier-league-api-endpoints-a-detailed-guide-acbd5598eb19). I started to develop a python jupyter notebook to pull the raw data from the API and dumped them into Postgre database. 
 
 
-   The data is updated as games are played every weeek, which means I will have to manually trigger my script in the jupyter notebook at the end of every match week. So, I think it will be a very good use case to spin up an Airflow Service locally to take care of this part. In this repo, I am going to walk you through how to set it up and have it pull the FPL data regularily.
+   The data is updated as games are played every weeek, which means I will have to manually trigger my script in the jupyter notebook at the end of every match week. So, I think it will be a very good use case to spin up an Airflow Service locally to take care of this part. In this repo, I am going to walk you through how to set it up and have it pull the FPL data regularily, followed by the analyses of how to play FPL decently.
 
 Before we get started. Here are the prerequisite:
-* A mac OS computer. The following tutorial is tested on a mac (sorry for windows users). 
+* A mac OS computer. The following tutorial is tested on macs (sorry for windows users). 
 * You should have [brew](https://brew.sh/) and [anaconda](https://www.anaconda.com/) install on your machine.
 
 # Setup Standalone Airflow Locally
 
 <details><summary>Click to Expand</summary>
    
-I tried to export the successfully setup environment from one machine to another machine to have an easy setup. However, given the different status of where each machine is. It's hard to go through the following procedure to finish the setup without any interruption. It might ask you to upgrade whole bunch stuffs. But here are the basic steps to install apach-airflow
+Given the different status of where each machine is, it's hard to go through the following procedure to finish the setup without any interruption. It might ask you to upgrade whole bunch stuffs. But here are the basic steps to install apach-airflow
 
-
-You can try create the environment from the yaml file. This will install the required packages for airflow but like I mentioned earlier, each machine is different depends on like the OS version, with or without certain packages. So, this method might not work.
-```bash
-$ conda env create -f environment.yml
-```
-   
-If it successfully imports the environment, you should be able to launch the airflow via 
-```bash
-$ conda activate fpl_airflow
-$ airflow standalone
-```
-
-If abvoe method doesn't work, I suggest removing the `fpl_airflow` environment if it's created and recreating it step by step.
+First, create a new environment for this project
    
 ```bash
-$ conda remove --name fpl_airflow --all
 $ conda create -n fpl_airflow
 ```
    
@@ -139,7 +126,7 @@ After the connection is setup, clone the repo under the `airflow/dags` folder an
 $ airflow standalone
 ```
 
-you should be able to login to the web UI @ localhost:8080 or something similar.
+you should be able to login to the web UI @ localhost:8080 or something similar and You will see the fpl_dags by typing the `fpl_api` in the search bar. Then we can backfill the data in the command line.
 
 ![Screen Shot 2022-03-18 at 4 52 41 AM](https://user-images.githubusercontent.com/17539049/158893333-db0eb6ae-4ab4-4f23-96a0-5ca2baf82a5a.png)
 
@@ -179,7 +166,7 @@ $ airflow dags backfill update_player_tables --start-date '2022-03-15' --end-dat
 
 ## Schedule
 
-Both `update_player_table` and `update_player_histories` are running at daily cadence so that we can have the fresh data everyday while the `update_fixture_tables` runs on Thursday and Friday because, there is usually when a new week game starts.
+Both `update_player_table` and `update_player_histories` are running at daily cadence so that we can have the fresh data everyday while the `update_fixture_tables` runs on Thursday and Friday because, this is usually when a new week game starts.
 
 </details>
 
@@ -190,7 +177,7 @@ The above tutorial concludes the Airflow setup. The next part will be selecting 
 <details>
    <summary>Click to Expand</summary>
    
-There are only four tables - `Teams, Player_current_status, player_histories, and Fixtures`. Since the amount of data is relatively small. I didn't normalize the table. The fact table is the `player_current_status` with the other 3 as dimension tables. Here is the schema of each one.
+Before diving into the analyses, here are what it pulls from the API. (There are other information but I don't think they are particularily useful at the moment). There are only four tables - `Teams, Player_current_status, player_histories, and Fixtures`. Since the amount of data is relatively small. I didn't normalize the table. The fact table is the `player_current_status` with the other 3 as dimension tables. Here is the schema of each one.
 
 ## Teams 
 * id, 
@@ -264,7 +251,7 @@ Schema is similar to player current status. I have full definition [here](https:
 
 # The FPL Game
 
-So, the goal of this game is to maximize the points you have from your starting 11 players according to the scoring [rule](https://fantasy.premierleague.com/help/rules) here given the limited budgets. The [prizes](https://fantasy.premierleague.com/prizes) are incredible and very competitive. As the time I am writing this, there are overall 9 million player worldwide to compete. If you decide to play the game for the first time. Here are some tips to select your first squad and how to navigate through the season.
+So, the goal of this game is to maximize the points you have from your starting 11 players according to the scoring [rule](https://fantasy.premierleague.com/help/rules) here given the limited budgets. The [prizes](https://fantasy.premierleague.com/prizes) are incredible and very competitive. As of the time I am writing this, there are about 9 million players worldwide to compete. If you decide to play the game for the first time. Here are some tips to select your first squad and how to navigate through the season.
 
 ## Initial Squad Selection
 
@@ -291,7 +278,7 @@ A Premier League season starts around September and ends around May next year. I
 
 <details><summary>Click to Expand</summary>
 
-First, analyzing the fixtures (aka the matches). Given there is only one free transfer every week (every extra transfer will take 4 points away from your total points), without making too many transfers in a given week. This game requires planning weeks ahead. Choose a team with favoring fixtures in the near future will reduce the time that you transfer your players. Rush into the team with good fixture this week might not give you the best results down the road.
+First, analyzing the fixtures (aka the matches). Given there is only one free transfer every week (every extra transfer will take 4 points away from your total points), this game requires planning weeks ahead. Choose a team with favoring fixtures in the near future will reduce the time that you transfer your players. Rush into the team with good fixture this week might not give you the best results down the road.
 
 Therefore, I use this [query](https://github.com/chiliang7/fpl_dags/blob/main/FPLVis.py#L174) to generate the average difficulty for this week, next-3 or next-5 fixtures to determine if a team is worth investing. 
 
@@ -299,7 +286,7 @@ Therefore, I use this [query](https://github.com/chiliang7/fpl_dags/blob/main/FP
 ![newplot (16)](https://user-images.githubusercontent.com/17539049/158542945-60c65927-9c3d-41eb-a403-37d235e2bafa.png)
 ![newplot (17)](https://user-images.githubusercontent.com/17539049/158542940-aecbddcc-f181-4226-8073-790bc5622ff7.png)
 
-For each table, I take the top 5 teams. if there are ties in the scores, I will take all of them. This gives me following team selections. If we just look at this week's difficulty, It's pretty clear that many teams have good fixture (easy game). However, if we look at next 3 or 5 gams together, clearly, there are some teams that really stand out, for example: [Tottenham Hotspur](https://www.tottenhamhotspur.com/) and [Chelsea FC](https://www.chelseafc.com/en)
+For each table, I take the top 5 teams. if there are ties in the scores, I will take all of them. This gives me following team selections. If we just look at this week's difficulty, It's pretty clear that many teams have good fixture (easy game). However, if we look at next 3 or 5 games together, clearly, there are some teams that really stand out, for example: [Tottenham Hotspur](https://www.tottenhamhotspur.com/) and [Chelsea FC](https://www.chelseafc.com/en)
    
 ```python
 >>> l1 = {'ARS', 'TOT', 'SOU', 'MCI', 'LIV', 'WHU', 'LEE', 'CHE', 'BHA', 'EVE' }
@@ -322,9 +309,10 @@ Given the fixture analysis above, we can start prioritizing bringing the players
 Once we decided which team we want to invest in the next few weeks, we need to narrow our selection to 1-3 players from each team (It only allows you to choose 3 players from a football club at most). Before we make the pick, we should at least ask two following questions:
    
 ### Does this player play?
-Once you indentify a few teams that worth investing in the next few weeks, then you need to select the players. When pick players, it important to make sure they will be in the starting 11 in order to maximize the points. One way to check if they will play is to look at the historical minutes-played of players to see if they will start. Just like many things in this world, the historical pattern do not necessary predict the future. There are factors such as switching head coach, injury, formation change, other games like UEFA CL heavily change the odds of whether or not a player will start. Nonetheless, I think first check how many minutes a player have this season so far isn't a bad start.
 
-Since Chelsea is a big football club with so many games besides Premier League to play throughout the season. It's not surprise that their players' minutes played are all overall the place like Chalobah and Havertz. However, on the other defender side, Rüdiger and Mendy are much more consistent and less likely to be benched.
+When picking players, it is important to make sure that they will be in the starting 11 in order to maximize the points. One way to check if they will play is to look at the historical minutes-played of players. Just like many things in this world, the historical pattern do not necessary predict the future. There are factors such as switching head coach, injury, formation change, other games like UEFA CL heavily change the odds of whether or not a player will start. Nonetheless, I think first check how many minutes a player have this season so far isn't a bad start.
+
+Since Chelsea is a big football club with so many games besides Premier League to play throughout the season. It's not surprise that their players' minutes played are all over the place like Chalobah and Havertz. However, on the other defender side, Rüdiger and Mendy are much more consistent and less likely to be benched.
    
 ![newplot (26)](https://user-images.githubusercontent.com/17539049/158729810-ec048f5a-2de4-4dbd-8b84-237c0f6bcd0d.png)
    
@@ -335,11 +323,13 @@ On the other hand, Spurs are not in any Cups competitions or Champion League thi
    
 ### Is the player worth your money?
 
-First, let's look at the points-per-game-per-million-pound-spent-for-season-to-day vs points-per-game-per-million-pound-spent-for-last-five-matches. Player in the top right corner is a good bargain thoughout the entire season. Reece James and Chalobah falls into category. On the bottom right, we have Havertz, who gains some form recently but okay throughout the season. The question is that if he can maintain this momentum. For the most of the players, they perform pretty consistently overtime so we can see there is correlation between these two metrics. Lastly, we have Lukaku at bottom left, which does not perform well this season at all and thus, might not be a good pick. 
+First, let's look at the points-per-game-per-million-pound-spent-for-season-to-day vs points-per-game-per-million-pound-spent-for-last-five-matches. Player in the top right corner is a good bargain thoughout all the games they played in this season so far. Reece James and Chalobah falls into category. On the bottom right, we have Havertz, who gains some form recently but not so well in the beginning of the season. The question is that if he can maintain this momentum. 
+
+Kulusevki and Doherty both players are in the starting-11 recently and played very well so it's not surprised to see them to have good values. For the most of the players, they perform pretty consistently overtime so we can see there is a correlation between these two metrics. Lastly, we have Lukaku at bottom left, which does not perform well this season at all and thus, might not be a good pick. 
 
 ![newplot (30)](https://user-images.githubusercontent.com/17539049/158740342-43fc5d9a-a1a6-4c7b-b4fb-cff0aa92edff.png)
 
-So, the above method is trying to find out the budget pick. What about if we want to maximize the performance and identify the players who can score more points for their manager? We can use the following total points vs form chart. For Spurs' players, Kane is an obvious pick. Though he is a bit expansive and does not perform well in the beginning of the season. Recently, he definitely imporves and scores a lot of points. Son is a bit lacking the form recently but perform fairly well this season so far, which is still a good pick. Kulusevki and Doherty are also pretty decent given their good forms. Moura should be in the watchlist as he gets benched recently.
+So, the above method is trying to find out the budget pick. What about if we want to maximize the performance and identify the players who can score most points for their manager? We can use the following total points vs form chart. For Spurs' players, Kane is an obvious pick. Though he is a bit expansive and does not perform well in the beginning of the season. Recently, he definitely imporves and scores a lot of points. Son is a bit lacking the form recently but perform fairly well this season so far, which is still a good pick. Kulusevki and Doherty are also pretty decent given their good forms. Moura should be in the watchlist as he gets benched recently.
 
 As for Chelsea's players, Rüdiger and Mount are good picks. They are consistently deliver the points. Havertz could be a fun pick if he can continue to perform. Lukaku should be in the watchlist as he doesn't play often and not play well, which does not justify his price tag at this moment. 
 
@@ -347,11 +337,14 @@ As for Chelsea's players, Rüdiger and Mount are good picks. They are consistent
 
 ![newplot (29)](https://user-images.githubusercontent.com/17539049/158740346-79a7e374-bca3-4c58-9307-64dd156d3456.png)
 
+With these analyses, you can apply them to other teams with good fixtures to complete the team selection or when you need to decide whom to transfer in/out during the game.
+   
 </details>
+
 
 
 # Summary
 
-Apache-Airflow is pretty easy to setup locally and is an easy-to-use ETL tool for personal projects. I am satisfied that it pulls the FPL data automatically so I can focus on the analysis part. Speaking of the analyses, the above ones only scratch the surface of the FPL. There are stats like chances created, missed, touches in the box, number of open crosses, shots taken, shots on target ... etc are not included in the dataset but also crucial when determining a player's performance. That being said, there is definitely a lot of room for this project to expand if needed. Simply accumulating player histories and fixtures will be huge. But for now, I think I am going to enjoy the rest of the season.
+Apache-Airflow is pretty easy to setup locally and is an easy-to-use ETL tool for personal projects. I am satisfied that it pulls the FPL data automatically so I can focus on the analysis part. As for the analyses, the above ones only scratch the surface of the FPL. There are stats like chances created, missed, touches in the box, number of open crosses, shots taken, shots on target ... etc are not included in the dataset but also crucial when determining a player's performance. That being said, there is definitely a lot of room for this project to expand if needed. Simply having these dags to run over years and accumulating player histories and fixtures will be huge. (They aggregate the previous seasons' data, so you can't get the match data from last year). But for now, I think this is good enogh for the rest of the season.
 
 
