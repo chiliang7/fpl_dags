@@ -152,17 +152,18 @@ $ airflow dags test create_team_table '2022-03-15'
 $ airflow dags backfill update_fixture_tables --start-date '2022-03-15' --end-date '2022-03-16'
 ```
 
-and 
-
-```bash
-$ airflow dags backfill update_player_histories --start-date '2022-03-15' --end-date '2022-03-16'
-```
-
-and 
+and
 
 ```bash
 $ airflow dags backfill update_player_tables --start-date '2022-03-15' --end-date '2022-03-16'
 ```
+
+and 
+   
+```bash
+$ airflow dags backfill update_player_histories --start-date '2022-03-15' --end-date '2022-03-16'
+```
+
 
 ## Schedule
 
