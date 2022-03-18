@@ -32,6 +32,8 @@ with DAG(
                 H_TEAM_DIFF INT,
                 A_TEAM INT,
                 A_TEAM_DIFF INT,
+                H_SCORE INT,
+                A_SCORE INT,
                 CREATED_AT TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 UPDATED_AT TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 PRIMARY KEY(CODE)

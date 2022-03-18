@@ -52,7 +52,7 @@ with DAG(
                 RED_CARDS INT,
                 WAS_HOME BOOL,
                 CREATED_AT TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                UPDATED_AT TIMESTAMPTZ NOT NULL DEFAULT NOW() ON UPDATE ,
+                UPDATED_AT TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 PRIMARY KEY(PLAYER_CODE, FIXTURE_CODE)
             );
 
@@ -65,7 +65,7 @@ with DAG(
             EXECUTE PROCEDURE trigger_set_timestamp();
         """
     )
-    
+
     create_player_current_status = PostgresOperator(
         task_id='create_player_current_status',
         postgres_conn_id='postgres',

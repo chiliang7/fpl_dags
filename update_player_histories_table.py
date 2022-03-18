@@ -25,8 +25,10 @@ with DAG(
         team_name_dict  = {}
         fixture_dict    = {}
         rows = ""
+        user_name = None
+        password  = None
 
-        with psycopg2.connect("dbname=fpl user=airflow password=airflow host=localhost") as conn:
+        with psycopg2.connect("dbname=fpl user={} password={} host=localhost".format(user_name, password)) as conn:
             with conn.cursor() as cur:
 
                 cur.execute("""
